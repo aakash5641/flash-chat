@@ -93,7 +93,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 //Go to login screen.
                 Navigator.pushNamed(context, RegistrationScreen.id);
               },
-              colour: Colors.lightBlueAccent,
+              colour: Colors.blueAccent,
             ),
           ],
         ),
