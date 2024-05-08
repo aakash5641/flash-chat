@@ -18,7 +18,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   @override
   void initState() {
-  
     super.initState();
     controller = AnimationController(
       // vsync needs the state object so this function will mark it to the state object
@@ -38,7 +37,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   @override
   void dispose() {
-
     controller.dispose();
     super.dispose();
   }
