@@ -3,6 +3,8 @@ import 'package:flash_chat/constants.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+late User loggedInUser;
+
 class ChatScreen extends StatefulWidget {
   static const String id = 'chat_screen';
   @override
@@ -13,8 +15,8 @@ class _ChatScreenState extends State<ChatScreen> {
   String messageText = '';
   final _auth = FirebaseAuth.instance;
   final _firestore = FirebaseFirestore.instance;
+  final messageTextController = TextEditingController();
 
-  late User loggedInUser;
   @override
   void initState() {
     super.initState();
@@ -39,13 +41,13 @@ class _ChatScreenState extends State<ChatScreen> {
   //   }
   // }
 
-  void messagesSteam() async {
-    await for (var snapshot in _firestore.collection('messages').snapshots()) {
-      for (var message in snapshot.docs) {
-        print(message.data());
-      }
-    }
-  }
+  // void messagesSteam() async {
+  //   await for (var snapshot in _firestore.collection('messages').snapshots()) {
+  //     for (var message in snapshot.docs) {
+  //       print(message.data());
+  //     }
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -84,8 +86,13 @@ class _ChatScreenState extends State<ChatScreen> {
                   for (var message in messages!) {
                     final messageText = message['text'];
                     final messageSender = message['sender'];
+
+                    final currentUser = loggedInUser.email;
+                    if (currentUser == messageSender) {
+                      //this means the message is from the logged in user
+                    }
                     final messageBubble =
-                        MessageBubble(text: messageText, sender: messageSender);
+                        MessageBubble(text: messageText, sender: messageSender, isMe: currentUser==messageSender,);
                     messageBubbles.add(messageBubble);
                   }
                   return Expanded(
@@ -103,6 +110,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: <Widget>[
                   Expanded(
                     child: TextField(
+                      controller: messageTextController,
                       onChanged: (value) {
                         //Do something with the user input.
                         messageText = value;
@@ -112,6 +120,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   TextButton(
                     onPressed: () {
+                      messageTextController.clear();
                       //Implement send functionality.
                       _firestore.collection('messages').add({
                         'text': messageText,
@@ -134,16 +143,17 @@ class _ChatScreenState extends State<ChatScreen> {
 }
 
 class MessageBubble extends StatelessWidget {
-  MessageBubble({required this.text, required this.sender});
+  MessageBubble({required this.text, required this.sender, required this.isMe});
   final String text;
   final String sender;
+  final bool isMe;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.all(10),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: isMe? CrossAxisAlignment.end: CrossAxisAlignment.start,
         children: [
           Text(
             sender,
@@ -151,14 +161,18 @@ class MessageBubble extends StatelessWidget {
           ),
           Material(
               elevation: 5.0,
-              borderRadius: BorderRadius.circular(30.0),
-              color: Colors.lightBlueAccent,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(30),
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
+              color: isMe? Colors.lightBlueAccent: Colors.white,
               child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   child: Text(
                     text,
                     style: TextStyle(
-                      color: Colors.white,
+                      color: isMe? Colors.white: Colors.black54,
                       fontSize: 15,
                     ),
                   ))),
