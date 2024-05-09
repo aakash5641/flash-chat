@@ -69,6 +69,33 @@ class _ChatScreenState extends State<ChatScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
+            StreamBuilder<QuerySnapshot>(
+                stream: _firestore.collection('messages').snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    // when the user just login initiaally than it will show the circular indicator while loading the messages
+                    return Center(
+                      child: CircularProgressIndicator(
+                          backgroundColor: Colors.blueAccent),
+                    );
+                  }
+                  final messages = snapshot.data?.docs;
+                  List<MessageBubble> messageBubbles = [];
+                  for (var message in messages!) {
+                    final messageText = message['text'];
+                    final messageSender = message['sender'];
+                    final messageBubble =
+                        MessageBubble(text: messageText, sender: messageSender);
+                    messageBubbles.add(messageBubble);
+                  }
+                  return Expanded(
+                    child: ListView(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 10.0, vertical: 20.0),
+                      children: messageBubbles,
+                    ),
+                  );
+                }),
             Container(
               decoration: kMessageContainerDecoration,
               child: Row(
@@ -101,6 +128,41 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class MessageBubble extends StatelessWidget {
+  MessageBubble({required this.text, required this.sender});
+  final String text;
+  final String sender;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            sender,
+            style: TextStyle(color: Colors.black54, fontSize: 12),
+          ),
+          Material(
+              elevation: 5.0,
+              borderRadius: BorderRadius.circular(30.0),
+              color: Colors.lightBlueAccent,
+              child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  child: Text(
+                    text,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                    ),
+                  ))),
+        ],
       ),
     );
   }
