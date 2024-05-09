@@ -72,7 +72,10 @@ class _ChatScreenState extends State<ChatScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             StreamBuilder<QuerySnapshot>(
-                stream: _firestore.collection('messages').snapshots(),
+                stream: _firestore
+                    .collection('messages')
+                    .orderBy('ts', descending: true)
+                    .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     // when the user just login initiaally than it will show the circular indicator while loading the messages
@@ -86,17 +89,23 @@ class _ChatScreenState extends State<ChatScreen> {
                   for (var message in messages!) {
                     final messageText = message['text'];
                     final messageSender = message['sender'];
+                    final Timestamp messageTime = message['ts'] as Timestamp;
 
                     final currentUser = loggedInUser.email;
                     if (currentUser == messageSender) {
                       //this means the message is from the logged in user
                     }
-                    final messageBubble =
-                        MessageBubble(text: messageText, sender: messageSender, isMe: currentUser==messageSender,);
+                    final messageBubble = MessageBubble(
+                      text: messageText,
+                      sender: messageSender,
+                      isMe: currentUser == messageSender,
+                      time: messageTime,
+                    );
                     messageBubbles.add(messageBubble);
                   }
                   return Expanded(
                     child: ListView(
+                      reverse: true,
                       padding: EdgeInsets.symmetric(
                           horizontal: 10.0, vertical: 20.0),
                       children: messageBubbles,
@@ -125,6 +134,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       _firestore.collection('messages').add({
                         'text': messageText,
                         'sender': loggedInUser.email,
+                        'ts': Timestamp.now(),
                       });
                     },
                     child: Text(
@@ -143,17 +153,23 @@ class _ChatScreenState extends State<ChatScreen> {
 }
 
 class MessageBubble extends StatelessWidget {
-  MessageBubble({required this.text, required this.sender, required this.isMe});
+  MessageBubble(
+      {required this.text,
+      required this.sender,
+      required this.isMe,
+      required this.time});
   final String text;
   final String sender;
   final bool isMe;
+  final Timestamp time;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: EdgeInsets.all(10),
       child: Column(
-        crossAxisAlignment: isMe? CrossAxisAlignment.end: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
           Text(
             sender,
@@ -166,13 +182,13 @@ class MessageBubble extends StatelessWidget {
                 bottomLeft: Radius.circular(30),
                 bottomRight: Radius.circular(30),
               ),
-              color: isMe? Colors.lightBlueAccent: Colors.white,
+              color: isMe ? Colors.lightBlueAccent : Colors.white,
               child: Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   child: Text(
                     text,
                     style: TextStyle(
-                      color: isMe? Colors.white: Colors.black54,
+                      color: isMe ? Colors.white : Colors.black54,
                       fontSize: 15,
                     ),
                   ))),
